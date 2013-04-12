@@ -1,0 +1,6 @@
+# Here you have to specify a list of BungeeCord proxy ips.
+bungeeips: 
+- 127.0.0.1
+  
+# Here you have to specify the message sent to the player when kicked.
+playerKickMessage: '&cYou have to join through the proxy.'

@@ -1,0 +1,17 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.craftminecraft.bungee</groupId>
+  <artifactId>bungeejoin</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <name>BungeeJoin</name>
+  <description>Force players to join through Bungee - Supports spigot's BungeeCord.</description>
+  <dependencies>
+  	<dependency>
+  		<artifactId>net.md-5</artifactId>
+  		<groupId>spigot</groupId>
+  		<scope>system</scope>
+  		<version>1.0</version>
+  		<systemPath>${basedir}/lib/spigot.jar</systemPath>
+  	</dependency>
+  </dependencies>
+</project>

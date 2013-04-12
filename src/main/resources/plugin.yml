@@ -1,0 +1,4 @@
+name: BungeeJoin
+author: roblabla
+version: 1.0
+main: net.craftminecraft.bungee.bungeejoin.BungeeJoin
