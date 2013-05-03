@@ -1,4 +1,11 @@
-name: BungeeJoin
+name: IPWhitelist
 author: roblabla
 version: 1.0
-main: net.craftminecraft.bungee.bungeejoin.BungeeJoin
+main: net.craftminecraft.bukkit.ipwhitelist.IPWhitelist
+
+commands:
+  ipwhitelist:
+    description: IPWhitelist main command. Use /bungeejoin to get more help.
+    aliases: ['ipwl']
+    permission: 'ipwhitelist.setup'
+    permission-message: 'You do not have the necessary permission to run this command'
