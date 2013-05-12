@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -111,6 +112,13 @@ public class PlayerListener implements Listener {
 		}
 	}
 	
+	@EventHandler(priority=EventPriority.MONITOR)
+	public void onPlayerKick(PlayerKickEvent ev) {
+		if (!ev.getPlayer().getMetadata("ipwhitelistkick").isEmpty()) {
+			ev.setCancelled(false);
+		}
+	}
+
 	@EventHandler(priority=EventPriority.MONITOR)
 	public void onPlayerLeave(PlayerQuitEvent ev) {
 		if (!ev.getPlayer().getMetadata("ipwhitelistkick").isEmpty()) {
