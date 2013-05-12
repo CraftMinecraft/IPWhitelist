@@ -42,29 +42,31 @@ public class PlayerListener implements Listener {
 		// Otherwise, act like all the other plugins out there.
 		} else if (!this.plugin.getConfig().getStringList("whitelist").contains(ev.getAddress().getHostAddress())) {
 			ev.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
+			plugin.getLogger().log(Level.INFO, "User " + ev.getPlayer().getName()+ " attempted to connect with IP " + ev.getAddress().getHostAddress());
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	@EventHandler(priority=EventPriority.HIGHEST)
-	public void onPlayerJoin(PlayerJoinEvent event) {
+	public void onPlayerJoin(PlayerJoinEvent ev) {
 		if (plugin.getConfig().getBoolean("spigot_realip")) {
 			String address;
 
 			try {
 				// Get the class of the CraftPlayer.
 				if (clazz == null) {
-					ClassPath path = ClassPath.from(event.getPlayer().getClass().getClassLoader());
+					ClassPath path = ClassPath.from(ev.getPlayer().getClass().getClassLoader());
 					for (ClassPath.ClassInfo classinfo : path.getTopLevelClasses()) {
-						if (classinfo.getSimpleName().equals("CraftPlayer")) {
+						if (classinfo.getSimpleName().equals("CraftPlayer")
+							&& classinfo.getPackageName().startsWith("org.bukkit.craftbukkit")) {
 							clazz = Class.forName(classinfo.getName());
 							break;
 						}
 					}
 				}
-	
+
 				// Get the address from CraftPlayer
-				Object playerEntity = clazz.getMethod("getHandle").invoke(event.getPlayer());
+				Object playerEntity = clazz.getMethod("getHandle").invoke(ev.getPlayer());
 				
 				Field f = playerEntity.getClass().getField("playerConnection");
 				f.setAccessible(true);
@@ -73,7 +75,7 @@ public class PlayerListener implements Listener {
 					plugin.getLogger().log(Level.INFO, "playerConnection is null");
 					return;
 				}
-	
+
 				f = playerConnection.getClass().getField("networkManager");
 				f.setAccessible(true);
 				Object networkManager = f.get(playerConnection);
@@ -101,9 +103,10 @@ public class PlayerListener implements Listener {
 			}
 	
 			if (!this.plugin.getConfig().getStringList("whitelist").contains(address)) {
-				event.setJoinMessage(null);
-				event.getPlayer().setMetadata("ipwhitelistkick", new FixedMetadataValue(plugin, true));
-				event.getPlayer().kickPlayer(ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
+				ev.setJoinMessage(null);
+				ev.getPlayer().setMetadata("ipwhitelistkick", new FixedMetadataValue(plugin, true));
+				ev.getPlayer().kickPlayer(ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
+				plugin.getLogger().log(Level.INFO, "User " + ev.getPlayer().getName()+ " attempted to connect with IP " + address);
 			}
 		}
 	}
