@@ -1,6 +1,6 @@
 name: IPWhitelist
 author: roblabla
-version: 1.0
+version: 1.1
 main: net.craftminecraft.bukkit.ipwhitelist.IPWhitelist
 
 commands:
