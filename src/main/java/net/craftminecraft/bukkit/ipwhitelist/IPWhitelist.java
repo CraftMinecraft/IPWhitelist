@@ -1,25 +1,36 @@
 package net.craftminecraft.bukkit.ipwhitelist;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.ChatPaginator;
 import org.bukkit.util.ChatPaginator.ChatPage;
 
-import com.google.common.reflect.ClassPath;
+import com.google.common.collect.Lists;
 
 public class IPWhitelist extends JavaPlugin {
+	List<String> bungeeips = Lists.newArrayList();
+
 	public void onEnable() {
 		getConfig().options().copyDefaults(true);
 		saveDefaultConfig();
 		this.getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+		Configuration bukkityml = YamlConfiguration.loadConfiguration(new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml"));
+		bungeeips.addAll(bukkityml.getStringList("settings.bungee-proxies"));
 	}
 
-	public void onDisable() { }
+	public void onDisable() { bungeeips.clear(); }
+
+	public List<String> getBungeeIPs() {
+	    return this.bungeeips;
+	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -42,9 +53,12 @@ public class IPWhitelist extends JavaPlugin {
 		if (args[0].equalsIgnoreCase("list")) {
 			sender.sendMessage(getTag() + ChatColor.AQUA + "Whitelisted IPs :");
 			StringBuffer iplistbuff = new StringBuffer();
-			for (String ip : getConfig().getStringList("whitelist")) {
+			for (String ip : bungeeips) {
 				iplistbuff.append(ChatColor.AQUA + ip + "\n");
 			}
+			for (String ip : getConfig().getStringList("whitelist")) {
+                iplistbuff.append(ChatColor.AQUA + ip + "\n");
+            }
 			// Delete last newline if there is one.
 			if (iplistbuff.length() > 0) {
 				iplistbuff.deleteCharAt(iplistbuff.length()-1);
@@ -67,9 +81,10 @@ public class IPWhitelist extends JavaPlugin {
 				sender.sendMessage(ChatColor.AQUA + "/ipwhitelist addip <ip>");
 				return true;
 			}
-			List<String> whitelist = getConfig().getStringList("whitelist");
-			if (!whitelist.contains(args[1])) {
-				whitelist.add(args[1]);
+			if (!bungeeips.contains(args[1])
+			    && !getConfig().getStringList("whitelist").contains(args[1])) {
+			    List<String> whitelist = getConfig().getStringList("whitelist");
+			    whitelist.add(args[1]);
 				getConfig().set("whitelist", whitelist);
 				this.saveConfig();
 				sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully whitelisted IP " + args[1] + "!");

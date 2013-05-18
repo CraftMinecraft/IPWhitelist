@@ -1,12 +1,9 @@
-# Here you have to specify a list of whitelisted ips
+# Here you have to specify a list of whitelisted ips.
+# Note that you do not need to specify bungee IPs here. 
+# Those are automatically imported from your bukkit.yml.
+# Set them there if you didn't already.
 whitelist: 
 - 127.0.0.1
 
 # Here you have to specify the message sent to the player when kicked.
 playerKickMessage: '&cYou have to join through the proxy.'
-
-# Should we use the dirty hack to get the actual IP of whoever is connecting to us ?
-# The use-case for this is that spigot with bungeecord overwrites the IP
-# to the one belonging to the player. If you want to "whitelist" bungeecord IP, 
-# you need to set this to true. Hence the name.
-spigot_realip: false
