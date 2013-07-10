@@ -135,6 +135,10 @@ public class IPWhitelist extends JavaPlugin {
                 sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully unwhitelisted IP " + args[1] + "!");
                 return true;
             }
+            if (bungeeips.contains(args[1])) {
+                sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " is in your bukkit.yml's bungee-proxies. Remove it there!");
+                return true;
+            }
             sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " was not whitelisted!");
             return true;
         }
