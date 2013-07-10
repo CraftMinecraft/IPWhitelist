@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.logging.Level;
 
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -33,9 +34,13 @@ public class PlayerListener implements Listener {
             Object entityPlayer = invokeMethod("getHandle", ev.getPlayer());
             Object playerConnection = getField("playerConnection", entityPlayer);
             Object networkManager = getField("networkManager", playerConnection);
-            Object objaddress = invokeMethod("getSocketAddress", networkManager);
-            InetSocketAddress address = (InetSocketAddress) objaddress;
-            if (!this.plugin.allow(address)) {
+            Socket socket;
+            try { // spigot
+                socket = (Socket) invokeMethod("getSocket", networkManager);
+            } catch (NoSuchMethodException ex) { // bukkit or older versions of spigot.
+                socket = (Socket) getField("socket", networkManager);
+            }
+            if (!this.plugin.allow(socket.getInetAddress())) {
                 ev.setJoinMessage(null);
                 if (ev.getPlayer().getMetadata("IPWhitelist_kick").isEmpty()) { // we only need one metadata. If for some reason it didn't get removed, no need to re-add it.
                     ev.getPlayer().setMetadata("IPWhitelist_kick", new FixedMetadataValue(plugin, true));

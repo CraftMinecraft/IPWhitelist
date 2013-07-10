@@ -15,23 +15,19 @@ import org.bukkit.util.ChatPaginator.ChatPage;
 
 import com.google.common.collect.Lists;
 import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import org.bukkit.entity.Player;
 
 public class IPWhitelist extends JavaPlugin {
 
-    private boolean spigotSupport = false;
     private List<String> bungeeips = Lists.newArrayList();
     private List pendingList = null;
     private Class<? extends Player> clazz;
 
     public List getPendingList() {
         return pendingList;
-    }
-
-    public boolean getSpigotSupport() {
-        return this.spigotSupport;
     }
 
     public Class getPlayerClass() {
@@ -46,10 +42,21 @@ public class IPWhitelist extends JavaPlugin {
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
         this.getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
-        Configuration bukkityml = YamlConfiguration.loadConfiguration(new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml"));
-        if (bukkityml.contains("settings.bungee-proxies")) {
-            bungeeips.addAll(bukkityml.getStringList("settings.bungee-proxies"));
-            spigotSupport = true;
+        reloadBukkitConfig();
+    }
+
+    private void reloadBukkitConfig() {
+        bungeeips.clear();
+        File spigotyml = new File(this.getDataFolder().getParentFile().getParentFile(), "spigot.yml");
+        File bukkityml = new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml");
+        if (spigotyml.exists()) {
+            Configuration spigotcfg = YamlConfiguration.loadConfiguration(spigotyml);
+            if (spigotcfg.getBoolean("settings.bungeecord")) {
+                bungeeips.addAll(spigotcfg.getStringList("settings.bungeecord-addresses"));
+            }
+        } else if (bukkityml.exists()) {
+            Configuration bukkitcfg = YamlConfiguration.loadConfiguration(new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml"));
+            bungeeips.addAll(bukkitcfg.getStringList("settings.bungee-proxies"));
         }
     }
 
@@ -81,7 +88,7 @@ public class IPWhitelist extends JavaPlugin {
 
         if (args[0].equalsIgnoreCase("list")) {
             sender.sendMessage(getTag() + ChatColor.AQUA + "Whitelisted IPs :");
-            StringBuffer iplistbuff = new StringBuffer();
+            StringBuilder iplistbuff = new StringBuilder();
             for (String ip : bungeeips) {
                 iplistbuff.append(ChatColor.AQUA + ip + "\n");
             }
@@ -136,7 +143,7 @@ public class IPWhitelist extends JavaPlugin {
                 return true;
             }
             if (bungeeips.contains(args[1])) {
-                sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " is in your bukkit.yml's bungee-proxies. Remove it there!");
+                sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " is in your bukkit.yml or spigot.yml bungee-proxies. Remove it there!");
                 return true;
             }
             sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " was not whitelisted!");
@@ -144,16 +151,12 @@ public class IPWhitelist extends JavaPlugin {
         }
         if (args[0].equalsIgnoreCase("reload")) {
             this.reloadConfig();
-            bungeeips.clear();
-            Configuration bukkityml = YamlConfiguration.loadConfiguration(new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml"));
-            if (bukkityml.contains("settings.bungee-proxies")) {
-                bungeeips.addAll(bukkityml.getStringList("settings.bungee-proxies"));
-                spigotSupport = true;
-            }
+            reloadBukkitConfig();
 
             sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully reloaded config!");
             return true;
         }
+
         sender.sendMessage(getTag() + ChatColor.AQUA + "Commands : ");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist list [page] - List whitelisted IPs");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist addip <ip> - Add IP to whitelist");
@@ -173,5 +176,9 @@ public class IPWhitelist extends JavaPlugin {
 
     public boolean allow(InetSocketAddress addr) {
         return allow(addr.getAddress().getHostAddress());
+    }
+    
+    public boolean allow(InetAddress addr) {
+        return allow(addr.getHostAddress());
     }
 }
