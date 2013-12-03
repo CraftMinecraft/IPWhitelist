@@ -28,6 +28,7 @@ public class PlayerListener implements Listener {
     public PlayerListener(IPWhitelist plugin) {
         this.plugin = plugin;
     }
+    private boolean printShit = true;
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent ev) {
@@ -35,16 +36,22 @@ public class PlayerListener implements Listener {
             Object entityPlayer = invokeMethod("getHandle", ev.getPlayer());
             Object playerConnection = getField("playerConnection", entityPlayer);
             Object networkManager = getField("networkManager", playerConnection);
-            InetAddress addr = null;
-            try { // spigot
+            InetAddress addr;
+            if (methodExists("getSocket", networkManager)) {
                 addr = ((Socket) invokeMethod("getSocket", networkManager)).getInetAddress();
-            } catch (NoSuchMethodException ex) { // bukkit or older versions of spigot.
-                if (fieldExists("socket", networkManager))
-                    addr = ((Socket)getField("socket", networkManager)).getInetAddress();
-                else if (fieldExists("k", networkManager)) {
-                    Object channel = getField("k", networkManager);
-                    addr = ((InetSocketAddress)invokeMethod("remoteAddress", networkManager)).getAddress();
+            } else if (fieldExists("socket", networkManager)) {
+                addr = ((Socket) getField("socket", networkManager)).getInetAddress();
+            } else if (fieldExists("k", networkManager)) {
+                Object channel = getField("k", networkManager);
+                addr = ((InetSocketAddress) invokeMethod("remoteAddress", channel)).getAddress();
+            } else if (printShit) {
+                for (Field f : networkManager.getClass().getDeclaredFields()) {
+                    this.plugin.getLogger().log(Level.INFO, f.getType().getName() + " " + f.getName());
                 }
+                printShit = false;
+                return;
+            } else {
+                return;
             }
             if (!this.plugin.allow(addr)) {
                 ev.setJoinMessage(null);
@@ -69,17 +76,17 @@ public class PlayerListener implements Listener {
         }
     }
 
-    public boolean fieldExists(String fieldname, Object obj)
-    {
-        for (Field f : obj.getClass().getFields()) {
+    public boolean fieldExists(String fieldname, Object obj) {
+        for (Field f : obj.getClass().getDeclaredFields()) {
             if (f.getName().equals(fieldname)) {
                 return true;
             }
         }
         return false;
     }
+
     public Object getField(String fieldname, Object obj) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-        Field f = obj.getClass().getField(fieldname);
+        Field f = obj.getClass().getDeclaredField(fieldname);
         f.setAccessible(true);
         return f.get(obj);
     }
@@ -89,21 +96,21 @@ public class PlayerListener implements Listener {
         for (int i = 0; i < args.length; i++) {
             paramTypes[i] = args.getClass();
         }
-        
-        for (Method m : obj.getClass().getMethods())
-        {
-            if (m.getName().equals(methodname) && Arrays.equals(m.getParameterTypes(), paramTypes))
+
+        for (Method m : obj.getClass().getDeclaredMethods()) {
+            if (m.getName().equals(methodname) && Arrays.equals(m.getParameterTypes(), paramTypes)) {
                 return true;
+            }
         }
         return false;
     }
-    
+
     public Object invokeMethod(String methodname, Object obj, Object... args) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Class[] paramTypes = new Class[args.length];
         for (int i = 0; i < args.length; i++) {
             paramTypes[i] = args.getClass();
         }
-        Method m = obj.getClass().getMethod(methodname, paramTypes);
+        Method m = obj.getClass().getDeclaredMethod(methodname, paramTypes);
         m.setAccessible(true);
         return m.invoke(obj, args);
     }
