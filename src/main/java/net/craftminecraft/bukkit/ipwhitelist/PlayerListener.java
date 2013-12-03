@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -34,13 +35,18 @@ public class PlayerListener implements Listener {
             Object entityPlayer = invokeMethod("getHandle", ev.getPlayer());
             Object playerConnection = getField("playerConnection", entityPlayer);
             Object networkManager = getField("networkManager", playerConnection);
-            Socket socket;
+            InetAddress addr = null;
             try { // spigot
-                socket = (Socket) invokeMethod("getSocket", networkManager);
+                addr = ((Socket) invokeMethod("getSocket", networkManager)).getInetAddress();
             } catch (NoSuchMethodException ex) { // bukkit or older versions of spigot.
-                socket = (Socket) getField("socket", networkManager);
+                if (fieldExists("socket", networkManager))
+                    addr = ((Socket)getField("socket", networkManager)).getInetAddress();
+                else if (fieldExists("k", networkManager)) {
+                    Object channel = getField("k", networkManager);
+                    addr = ((InetSocketAddress)invokeMethod("remoteAddress", networkManager)).getAddress();
+                }
             }
-            if (!this.plugin.allow(socket.getInetAddress())) {
+            if (!this.plugin.allow(addr)) {
                 ev.setJoinMessage(null);
                 if (ev.getPlayer().getMetadata("IPWhitelist_kick").isEmpty()) { // we only need one metadata. If for some reason it didn't get removed, no need to re-add it.
                     ev.getPlayer().setMetadata("IPWhitelist_kick", new FixedMetadataValue(plugin, true));
@@ -63,12 +69,35 @@ public class PlayerListener implements Listener {
         }
     }
 
+    public boolean fieldExists(String fieldname, Object obj)
+    {
+        for (Field f : obj.getClass().getFields()) {
+            if (f.getName().equals(fieldname)) {
+                return true;
+            }
+        }
+        return false;
+    }
     public Object getField(String fieldname, Object obj) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         Field f = obj.getClass().getField(fieldname);
         f.setAccessible(true);
         return f.get(obj);
     }
 
+    public boolean methodExists(String methodname, Object obj, Object... args) {
+        Class[] paramTypes = new Class[args.length];
+        for (int i = 0; i < args.length; i++) {
+            paramTypes[i] = args.getClass();
+        }
+        
+        for (Method m : obj.getClass().getMethods())
+        {
+            if (m.getName().equals(methodname) && Arrays.equals(m.getParameterTypes(), paramTypes))
+                return true;
+        }
+        return false;
+    }
+    
     public Object invokeMethod(String methodname, Object obj, Object... args) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Class[] paramTypes = new Class[args.length];
         for (int i = 0; i < args.length; i++) {
