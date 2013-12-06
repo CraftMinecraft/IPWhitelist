@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.craftminecraft.bukkit</groupId>
   <artifactId>ipwhitelist</artifactId>
-  <version>1.5</version>
+  <version>1.6</version>
   <name>IPWhitelist</name>
   <description>Whitelist by IP - Supports spigot's BungeeCord.</description>
   <properties>
@@ -24,10 +24,18 @@
       <artifactId>bukkit</artifactId>
       <version>1.5.2-R0.1</version>
     </dependency>
-  	<dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>14.0.1</version>
-  	</dependency>
+    </dependency>
   </dependencies>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
 </project>
