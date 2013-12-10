@@ -1,28 +1,21 @@
 package net.craftminecraft.bukkit.ipwhitelist;
 
-import com.avaje.ebean.LogLevel;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 
-import com.google.common.reflect.ClassPath;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.metadata.FixedMetadataValue;
 
 public class PlayerListener implements Listener {
 
@@ -33,54 +26,34 @@ public class PlayerListener implements Listener {
     public PlayerListener(IPWhitelist plugin) {
         this.plugin = plugin;
     }
-    private boolean printShit = true;
 
-    @EventHandler(ignoreCancelled = false, priority = EventPriority.HIGHEST)
-    public void onPlayerJoin(PlayerJoinEvent ev) {
-        try {
-            Object entityPlayer = invokeMethod("getHandle", ev.getPlayer());
-            Object playerConnection = getField("playerConnection", entityPlayer);
-            Object networkManager = getField("networkManager", playerConnection);
-            InetAddress addr;
-            if (methodExists("getSocket", networkManager)) {
-                addr = ((Socket) invokeMethod("getSocket", networkManager)).getInetAddress();
-            } else if (fieldExists("socket", networkManager)) {
-                addr = ((Socket) getField("socket", networkManager)).getInetAddress();
-            } else if (fieldExists("k", networkManager)) {
-                Object channel = getField("k", networkManager);
-                addr = ((InetSocketAddress) invokeMethod("remoteAddress", channel)).getAddress();
-            } else if (printShit) {
-                for (Field f : networkManager.getClass().getDeclaredFields()) {
-                    this.plugin.getLogger().log(Level.INFO, f.getType().getName() + " " + f.getName());
-                }
-                printShit = false;
-                return;
-            } else {
-                return;
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onPlayerLogin(PlayerLoginEvent ev) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
+        Object mcServer = getField("console", plugin.getServer());
+        Object serverConnection = invokeMethod("ag", mcServer);
+        List listOfNetworkManager = (List)getField("f", serverConnection);
+        for (Object obj : listOfNetworkManager) {
+            Object packetListener = invokeMethod("getPacketListener", obj);
+            if (!packetListener.getClass().getSimpleName().equals("LoginListener")) {
+                plugin.getLogger().log(Level.INFO, packetListener.getClass().getSimpleName());
+                continue;
             }
+            Object gameProfile = getField("i", packetListener);
+            String name = (String)invokeMethod("getName", gameProfile);
+            if (!name.equalsIgnoreCase(ev.getPlayer().getName()))
+            {
+                plugin.getLogger().log(Level.INFO, name);
+                continue;
+            }
+            InetAddress addr = ((InetSocketAddress)invokeMethod("getSocketAddress", obj)).getAddress();
             if (!this.plugin.allow(addr)) {
-                ev.setJoinMessage(null);
-                if (ev.getPlayer().getMetadata("IPWhitelist_kick").isEmpty()) { // we only need one metadata. If for some reason it didn't get removed, no need to re-add it.
-                    ev.getPlayer().setMetadata("IPWhitelist_kick", new FixedMetadataValue(plugin, true));
-                }
-                ev.getPlayer().kickPlayer(ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
+                ev.setKickMessage(ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
+                ev.setResult(PlayerLoginEvent.Result.KICK_WHITELIST);
             }
-        } catch (InvocationTargetException ex) {
-            plugin.getLogger().log(Level.SEVERE, null, ex.getCause());
-        } catch (Exception ex) {
-            plugin.getLogger().log(Level.SEVERE, null, ex);
+            break;
         }
     }
-
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
-    public void onPlayerKick(PlayerKickEvent ev) {
-        if (!ev.getPlayer().getMetadata("IPWhitelist_kick").isEmpty()) {
-            ev.setCancelled(false); // Force the kick to happen.
-            ev.setLeaveMessage(null);
-            ev.getPlayer().removeMetadata("IPWhitelist_kick", plugin);
-        }
-    }
-
+   
     public boolean fieldExists(String fieldname, Object obj) {
         String fieldid = obj.getClass().getName() + " " + fieldname;
         if (fields.containsKey(fieldid)) {
