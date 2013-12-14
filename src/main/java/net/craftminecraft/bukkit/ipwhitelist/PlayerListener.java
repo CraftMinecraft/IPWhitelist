@@ -32,8 +32,8 @@ public class PlayerListener implements Listener {
         Object mcServer = getField("console", plugin.getServer());
         Object serverConnection = invokeMethod("ag", mcServer);
         List listOfNetworkManager = (List)getField("f", serverConnection);
-        for (Object obj : listOfNetworkManager) {
-            Object packetListener = invokeMethod("getPacketListener", obj);
+        for (Object networkManager : listOfNetworkManager) {
+            Object packetListener = invokeMethod("getPacketListener", networkManager);
             if (!packetListener.getClass().getSimpleName().equals("LoginListener")) {
                 plugin.getLogger().log(Level.INFO, packetListener.getClass().getSimpleName());
                 continue;
@@ -45,7 +45,8 @@ public class PlayerListener implements Listener {
                 plugin.getLogger().log(Level.INFO, name);
                 continue;
             }
-            InetAddress addr = ((InetSocketAddress)invokeMethod("getSocketAddress", obj)).getAddress();
+            Object channel = getField("k", networkManager);
+            InetAddress addr = ((InetSocketAddress) invokeMethod("remoteAddress", channel)).getAddress();
             this.plugin.debug("Player " + name + " is connecting with IP : " + addr);
             if (!this.plugin.allow(addr)) {
                 ev.setKickMessage(ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
