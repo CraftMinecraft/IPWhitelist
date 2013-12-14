@@ -7,3 +7,6 @@ whitelist:
 
 # Here you have to specify the message sent to the player when kicked.
 playerKickMessage: '&cYou have to join through the proxy.'
+
+# Put this to true to print the real IP of every player attempting to connect.
+debug: true

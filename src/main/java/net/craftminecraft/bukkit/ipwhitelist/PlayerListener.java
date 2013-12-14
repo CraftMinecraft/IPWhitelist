@@ -46,6 +46,7 @@ public class PlayerListener implements Listener {
                 continue;
             }
             InetAddress addr = ((InetSocketAddress)invokeMethod("getSocketAddress", obj)).getAddress();
+            this.plugin.debug("Player " + name + " is connecting with IP : " + addr);
             if (!this.plugin.allow(addr)) {
                 ev.setKickMessage(ChatColor.translateAlternateColorCodes('&', this.plugin.getConfig().getString("playerKickMessage")));
                 ev.setResult(PlayerLoginEvent.Result.KICK_WHITELIST);

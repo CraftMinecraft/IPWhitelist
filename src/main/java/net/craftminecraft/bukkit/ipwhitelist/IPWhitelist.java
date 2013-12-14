@@ -156,12 +156,17 @@ public class IPWhitelist extends JavaPlugin {
             sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully reloaded config!");
             return true;
         }
-
+        if (args[0].equalsIgnoreCase("debug")) {
+            this.getConfig().set("debug", !this.getConfig().getBoolean("debug"));
+            this.saveConfig();
+            sender.sendMessage(getTag() + ChatColor.AQUA + "Debug mode : " + ChatColor.RED + this.getConfig().getBoolean("debug"));
+        }
         sender.sendMessage(getTag() + ChatColor.AQUA + "Commands : ");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist list [page] - List whitelisted IPs");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist addip <ip> - Add IP to whitelist");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist remip <ip> - Removes IP to whitelist");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist reload - Reload whitelist");
+        sender.sendMessage(ChatColor.AQUA + "/ipwhtelist debug - Toggles debug state");
         return true;
     }
 
@@ -180,5 +185,11 @@ public class IPWhitelist extends JavaPlugin {
     
     public boolean allow(InetAddress addr) {
         return allow(addr.getHostAddress());
+    }
+    
+    public void debug(String s) {
+        if (this.getConfig().getBoolean("debug")) {
+            this.getLogger().log(Level.INFO, s);
+        }
     }
 }
