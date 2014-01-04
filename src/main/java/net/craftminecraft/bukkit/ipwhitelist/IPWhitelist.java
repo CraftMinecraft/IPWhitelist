@@ -188,7 +188,7 @@ public class IPWhitelist extends JavaPlugin {
     }
     
     public void debug(String s) {
-        if (this.getConfig().getBoolean("debug")) {
+        if (this.getConfig().getBoolean("debug", false)) {
             this.getLogger().log(Level.INFO, s);
         }
     }

@@ -35,14 +35,14 @@ public class PlayerListener implements Listener {
         for (Object networkManager : listOfNetworkManager) {
             Object packetListener = invokeMethod("getPacketListener", networkManager);
             if (!packetListener.getClass().getSimpleName().equals("LoginListener")) {
-                plugin.getLogger().log(Level.INFO, packetListener.getClass().getSimpleName());
+                plugin.debug(packetListener.getClass().getSimpleName());
                 continue;
             }
             Object gameProfile = getField("i", packetListener);
             String name = (String)invokeMethod("getName", gameProfile);
             if (!name.equalsIgnoreCase(ev.getPlayer().getName()))
             {
-                plugin.getLogger().log(Level.INFO, name);
+                plugin.debug(name);
                 continue;
             }
             Object channel = getField("k", networkManager);
