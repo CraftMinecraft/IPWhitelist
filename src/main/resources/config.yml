@@ -10,3 +10,8 @@ playerKickMessage: '&cYou have to join through the proxy.'
 
 # Put this to true to print the real IP of every player attempting to connect.
 debug: false
+
+# Setup mode, enabled on first run, will automatically whitelist the IP of any
+# connecting player that is detected to come through bungeecord.
+# WARNING : This should be set to false once you have whitelisted your bungeecord !
+setup: true

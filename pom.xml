@@ -11,7 +11,7 @@
   <repositories>
     <repository>
       <id>CMC-Dev</id>
-      <url>http://repo.craftminecraft.net/content/groups/public/</url>
+      <url>http://repo.cmc.im/</url>
     </repository>
     <repository>
       <id>md5</id>
@@ -20,9 +20,9 @@
   </repositories>
   <dependencies>
     <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
-      <version>1.5.2-R0.1</version>
+      <groupId>org.spigotmc</groupId>
+      <artifactId>spigot-api</artifactId>
+      <version>1.7.2-R0.3-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

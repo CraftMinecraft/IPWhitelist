@@ -1,7 +1,6 @@
 package net.craftminecraft.bukkit.ipwhitelist;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -14,28 +13,17 @@ import org.bukkit.util.ChatPaginator;
 import org.bukkit.util.ChatPaginator.ChatPage;
 
 import com.google.common.collect.Lists;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
-import org.bukkit.entity.Player;
 
 public class IPWhitelist extends JavaPlugin {
 
     private List<String> bungeeips = Lists.newArrayList();
     private List pendingList = null;
-    private Class<? extends Player> clazz;
 
     public List getPendingList() {
         return pendingList;
-    }
-
-    public Class getPlayerClass() {
-        return clazz;
-    }
-
-    public void setPlayerClass(Class clazz) {
-        this.clazz = clazz;
     }
 
     public void onEnable() {
@@ -157,9 +145,17 @@ public class IPWhitelist extends JavaPlugin {
             return true;
         }
         if (args[0].equalsIgnoreCase("debug")) {
-            this.getConfig().set("debug", !this.getConfig().getBoolean("debug"));
+            this.getConfig().set("debug", !this.getConfig().getBoolean("debug", false));
             this.saveConfig();
             sender.sendMessage(getTag() + ChatColor.AQUA + "Debug mode : " + ChatColor.RED + this.getConfig().getBoolean("debug"));
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("setup")) {
+            this.getConfig().set("setup", !this.getConfig().getBoolean("setup", false));
+            this.saveConfig();
+            sender.sendMessage(getTag() + ChatColor.AQUA + "Setup mode : " + ChatColor.RED + this.getConfig().getBoolean("setup"));
+            return true;
         }
         sender.sendMessage(getTag() + ChatColor.AQUA + "Commands : ");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist list [page] - List whitelisted IPs");
@@ -167,6 +163,7 @@ public class IPWhitelist extends JavaPlugin {
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist remip <ip> - Removes IP to whitelist");
         sender.sendMessage(ChatColor.AQUA + "/ipwhitelist reload - Reload whitelist");
         sender.sendMessage(ChatColor.AQUA + "/ipwhtelist debug - Toggles debug state");
+        sender.sendMessage(ChatColor.AQUA + "/ipwhitelist setup - Turn setup mode on");
         return true;
     }
 
@@ -182,11 +179,20 @@ public class IPWhitelist extends JavaPlugin {
     public boolean allow(InetSocketAddress addr) {
         return allow(addr.getAddress().getHostAddress());
     }
-    
+
     public boolean allow(InetAddress addr) {
         return allow(addr.getHostAddress());
     }
-    
+
+    public void whitelist(InetSocketAddress ip) {
+        whitelist(ip.getAddress().getHostAddress());
+    }
+
+    public void whitelist(String ip) {
+        this.getConfig().getStringList("whitelist").add(ip);
+        this.saveConfig();
+    }
+
     public void debug(String s) {
         if (this.getConfig().getBoolean("debug", false)) {
             this.getLogger().log(Level.INFO, s);
