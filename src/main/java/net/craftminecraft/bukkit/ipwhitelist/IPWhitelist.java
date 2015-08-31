@@ -31,6 +31,12 @@ public class IPWhitelist extends JavaPlugin {
         saveDefaultConfig();
         this.getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         reloadBukkitConfig();
+        if (this.getConfig().getBoolean("setup", false)
+                && !(bungeeips.isEmpty()
+                    && this.getConfig().getStringList("whitelist").isEmpty())) {
+            this.getConfig().set("setup", false);
+            this.saveConfig();
+        }
     }
 
     private void reloadBukkitConfig() {
@@ -110,6 +116,7 @@ public class IPWhitelist extends JavaPlugin {
                 List<String> whitelist = getConfig().getStringList("whitelist");
                 whitelist.add(args[1]);
                 getConfig().set("whitelist", whitelist);
+                getConfig().set("setup", false);
                 this.saveConfig();
                 sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully whitelisted IP " + args[1] + "!");
                 return true;
@@ -152,6 +159,12 @@ public class IPWhitelist extends JavaPlugin {
         }
 
         if (args[0].equalsIgnoreCase("setup")) {
+            if (!this.getConfig().getBoolean("setup", false)
+                && !(bungeeips.isEmpty()
+                    && this.getConfig().getStringList("whitelist").isEmpty())) {
+                sender.sendMessage(getTag() + ChatColor.RED + "Cannot enable setup mode, some IPs are already whitelisted");
+                return true;
+            }
             this.getConfig().set("setup", !this.getConfig().getBoolean("setup", false));
             this.saveConfig();
             sender.sendMessage(getTag() + ChatColor.AQUA + "Setup mode : " + ChatColor.RED + this.getConfig().getBoolean("setup"));

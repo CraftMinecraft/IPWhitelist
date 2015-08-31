@@ -1,9 +1,9 @@
 # Here you have to specify a list of whitelisted ips.
-# Note that you do not need to specify bungee IPs here. 
+# Note that you do not need to specify bungee IPs here.
 # Those are automatically imported from your bukkit.yml.
 # Set them there if you didn't already.
-whitelist: 
-- 127.0.0.1
+whitelist: []
+
 
 # Here you have to specify the message sent to the player when kicked.
 playerKickMessage: '&cYou have to join through the proxy.'
@@ -11,7 +11,8 @@ playerKickMessage: '&cYou have to join through the proxy.'
 # Put this to true to print the real IP of every player attempting to connect.
 debug: false
 
-# Setup mode, enabled on first run, will automatically whitelist the IP of any
-# connecting player that is detected to come through bungeecord.
+# Setup mode, enabled on first run, will automatically whitelist the IP of the
+# first player that is detected to connect through bungeecord, kicking the
+# other players after 1 second.
 # WARNING : This should be set to false once you have whitelisted your bungeecord !
 setup: true
