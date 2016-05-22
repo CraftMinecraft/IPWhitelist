@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.craftminecraft.bukkit</groupId>
   <artifactId>ipwhitelist</artifactId>
-  <version>1.7</version>
+  <version>1.8</version>
   <name>IPWhitelist</name>
   <description>Whitelist by IP - Supports spigot's BungeeCord.</description>
   <properties>
@@ -10,8 +10,8 @@
   </properties>
   <repositories>
     <repository>
-      <id>CMC-Dev</id>
-      <url>http://repo.cmc.im/</url>
+      <id>sponge</id>
+      <url>http://repo.spongepowered.org/maven</url>
     </repository>
     <repository>
       <id>md5</id>
@@ -25,12 +25,33 @@
       <version>1.7.2-R0.3-SNAPSHOT</version>
     </dependency>
     <dependency>
+      <groupId>org.spongepowered</groupId>
+      <artifactId>spongeapi</artifactId>
+      <version>4.0.3</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>14.0.1</version>
+      <version>17.0</version>
+    </dependency>
+    <dependency>
+      <groupId>ninja.leaping.configurate</groupId>
+      <artifactId>configurate-yaml</artifactId>
+      <version>3.1.1</version>
     </dependency>
   </dependencies>
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
     <resources>
       <resource>
         <directory>src/main/resources</directory>

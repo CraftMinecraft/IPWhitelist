@@ -17,48 +17,45 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
+import ninja.leaping.configurate.loader.ConfigurationLoader;
+import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
+
+import net.craftminecraft.common.ipwhitelist.BungeeIPs;
+
 public class IPWhitelist extends JavaPlugin {
 
-    private List<String> bungeeips = Lists.newArrayList();
-    private List pendingList = null;
-
-    public List getPendingList() {
-        return pendingList;
-    }
+    private BungeeIPs bungeeips;
 
     public void onEnable() {
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
         this.getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
-        reloadBukkitConfig();
-        if (this.getConfig().getBoolean("setup", false)
-                && !(bungeeips.isEmpty()
-                    && this.getConfig().getStringList("whitelist").isEmpty())) {
-            this.getConfig().set("setup", false);
-            this.saveConfig();
-        }
+        this.saveResource("config.yml", false);
+        ConfigurationLoader loader = YAMLConfigurationLoader.builder().setFile(new File(this.getDataFolder(), "config.yml")).build();
+        this.bungeeips = new BungeeIPs(loader, this.getBukkitConfig());
     }
 
-    private void reloadBukkitConfig() {
-        bungeeips.clear();
+    private List<String> getBukkitConfig() {
+        // TODO: Get config
         File spigotyml = new File(this.getDataFolder().getParentFile().getParentFile(), "spigot.yml");
         File bukkityml = new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml");
         if (spigotyml.exists()) {
             Configuration spigotcfg = YamlConfiguration.loadConfiguration(spigotyml);
             if (spigotcfg.getBoolean("settings.bungeecord")) {
-                bungeeips.addAll(spigotcfg.getStringList("settings.bungeecord-addresses"));
+                return spigotcfg.getStringList("settings.bungeecord-addresses");
             }
         } else if (bukkityml.exists()) {
             Configuration bukkitcfg = YamlConfiguration.loadConfiguration(new File(this.getDataFolder().getParentFile().getParentFile(), "bukkit.yml"));
-            bungeeips.addAll(bukkitcfg.getStringList("settings.bungee-proxies"));
+            return bukkitcfg.getStringList("settings.bungee-proxies");
         }
+        return Lists.newArrayList();
     }
 
     public void onDisable() {
-        bungeeips.clear();
+        bungeeips = null;
     }
 
-    public List<String> getBungeeIPs() {
+    public BungeeIPs getBungeeIPs() {
         return this.bungeeips;
     }
 
@@ -83,10 +80,7 @@ public class IPWhitelist extends JavaPlugin {
         if (args[0].equalsIgnoreCase("list")) {
             sender.sendMessage(getTag() + ChatColor.AQUA + "Whitelisted IPs :");
             StringBuilder iplistbuff = new StringBuilder();
-            for (String ip : bungeeips) {
-                iplistbuff.append(ChatColor.AQUA + ip + "\n");
-            }
-            for (String ip : getConfig().getStringList("whitelist")) {
+            for (String ip : bungeeips.getIPs()) {
                 iplistbuff.append(ChatColor.AQUA + ip + "\n");
             }
             // Delete last newline if there is one.
@@ -110,19 +104,13 @@ public class IPWhitelist extends JavaPlugin {
                 sender.sendMessage(getTag() + ChatColor.AQUA + "Command usage : ");
                 sender.sendMessage(ChatColor.AQUA + "/ipwhitelist addip <ip>");
                 return true;
-            }
-            if (!bungeeips.contains(args[1])
-                    && !getConfig().getStringList("whitelist").contains(args[1])) {
-                List<String> whitelist = getConfig().getStringList("whitelist");
-                whitelist.add(args[1]);
-                getConfig().set("whitelist", whitelist);
-                getConfig().set("setup", false);
-                this.saveConfig();
+            } else if (bungeeips.whitelist(args[1])) {
                 sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully whitelisted IP " + args[1] + "!");
                 return true;
+            } else {
+                 sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " was already whitelisted!");
+                 return true;
             }
-            sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " was already whitelisted!");
-            return true;
         }
         if (args[0].equalsIgnoreCase("remip")) {
             if (args.length < 2) {
@@ -130,44 +118,38 @@ public class IPWhitelist extends JavaPlugin {
                 sender.sendMessage(ChatColor.AQUA + "/ipwhitelist remip <ip>");
                 return true;
             }
-            List<String> whitelist = getConfig().getStringList("whitelist");
-            if (whitelist.remove(args[1])) {
-                getConfig().set("whitelist", whitelist);
-                this.saveConfig();
+            int x = bungeeips.unwhitelist(args[1]);
+            if (x == 0) {
                 sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully unwhitelisted IP " + args[1] + "!");
                 return true;
-            }
-            if (bungeeips.contains(args[1])) {
+            } else if (x == 1) {
                 sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " is in your bukkit.yml or spigot.yml bungee-proxies. Remove it there!");
                 return true;
+            } else {
+                sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " was not whitelisted!");
+                return true;
             }
-            sender.sendMessage(getTag() + ChatColor.AQUA + "IP " + args[1] + " was not whitelisted!");
-            return true;
         }
         if (args[0].equalsIgnoreCase("reload")) {
-            this.reloadConfig();
-            reloadBukkitConfig();
+            this.bungeeips.reload();
 
             sender.sendMessage(getTag() + ChatColor.AQUA + "Successfully reloaded config!");
             return true;
         }
         if (args[0].equalsIgnoreCase("debug")) {
-            this.getConfig().set("debug", !this.getConfig().getBoolean("debug", false));
-            this.saveConfig();
-            sender.sendMessage(getTag() + ChatColor.AQUA + "Debug mode : " + ChatColor.RED + this.getConfig().getBoolean("debug"));
+            boolean debug = this.bungeeips.toggleDebug();
+            sender.sendMessage(getTag() + ChatColor.AQUA + "Debug mode : " + ChatColor.RED + debug);
             return true;
         }
 
         if (args[0].equalsIgnoreCase("setup")) {
-            if (!this.getConfig().getBoolean("setup", false)
-                && !(bungeeips.isEmpty()
-                    && this.getConfig().getStringList("whitelist").isEmpty())) {
+            if (!this.bungeeips.isSetupModeEnabled()
+                && !(this.bungeeips.getIPs().isEmpty())) {
                 sender.sendMessage(getTag() + ChatColor.RED + "Cannot enable setup mode, some IPs are already whitelisted");
                 return true;
             }
-            this.getConfig().set("setup", !this.getConfig().getBoolean("setup", false));
-            this.saveConfig();
-            sender.sendMessage(getTag() + ChatColor.AQUA + "Setup mode : " + ChatColor.RED + this.getConfig().getBoolean("setup"));
+            boolean setup = this.bungeeips.toggleSetup();
+            sender.sendMessage(getTag() + ChatColor.AQUA + "Setup mode : " + ChatColor.RED + setup);
             return true;
         }
         sender.sendMessage(getTag() + ChatColor.AQUA + "Commands : ");
@@ -184,31 +166,8 @@ public class IPWhitelist extends JavaPlugin {
         return ChatColor.ITALIC.toString() + ChatColor.GREEN + "[" + ChatColor.AQUA + this.getName() + ChatColor.GREEN + "] " + ChatColor.RESET;
     }
 
-    public boolean allow(String ip) {
-        return this.bungeeips.contains(ip)
-                || this.getConfig().getStringList("whitelist").contains(ip);
-    }
-
-    public boolean allow(InetSocketAddress addr) {
-        return allow(addr.getAddress().getHostAddress());
-    }
-
-    public boolean allow(InetAddress addr) {
-        return allow(addr.getHostAddress());
-    }
-
-    public void whitelist(InetSocketAddress ip) {
-        whitelist(ip.getAddress().getHostAddress());
-    }
-
-    public void whitelist(String ip) {
-        this.getConfig().getStringList("whitelist").add(ip);
-        this.saveConfig();
-    }
-
     public void debug(String s) {
-        if (this.getConfig().getBoolean("debug", false)) {
+        if (this.bungeeips.isDebugEnabled())
             this.getLogger().log(Level.INFO, s);
-        }
     }
 }
