@@ -11,11 +11,11 @@
   <repositories>
     <repository>
       <id>sponge</id>
-      <url>http://repo.spongepowered.org/maven</url>
+      <url>https://repo.spongepowered.org/maven</url>
     </repository>
     <repository>
       <id>md5</id>
-      <url>http://repo.md-5.net/content/groups/public</url>
+      <url>https://repo.md-5.net/content/groups/public</url>
     </repository>
   </repositories>
   <dependencies>
